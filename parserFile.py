@@ -28,20 +28,25 @@ print(f"How many tasks do we have? {taskCount}\n")
 taskList = []
 dfa = {0: {'0': 0, '1': 1}, }
 
+# Retrieve first task and child nodes
 for idx in range(0, taskCount):
     elements = document.getElementsByTagNameNS("*", "task")
     if not elements:
         continue
-    taskList.append(elements[0])
+    taskList.append(elements[idx]) # Saves all task elements in a list
 
 for idx in range(0, taskCount):
-    for child in taskList[0].childNodes:
+    for child in taskList[idx].childNodes:
         if child.nodeType == Node.ELEMENT_NODE:
             if child.tagName == "bpmn:incoming":
-                dfa.__setitem__(1, child.firstChild.data)
+                dfa.__setitem__("incoming"+str(idx), child.firstChild.data)
             elif child.tagName == "bpmn:outgoing":
-                dfa.__setitem__(2, child.firstChild.data)
-print(len(taskList))
+                dfa.__setitem__("outgoing"+str(idx), child.firstChild.data)
+
+print(f"Task list length: {len(taskList)}")
+print(taskList[3].getAttribute("id"))
+print(f"Here's the incoming of the first task{dfa.get('incoming0')}")
+print(f"Here's the outgoing of the first task {dfa.get('outgoing0')}")
 print(f"Here's the DFA {dfa}")
 
 # Gateways
@@ -72,5 +77,3 @@ for child in gateway.childNodes:
             outgoing.append(child.firstChild.data)
 
 print(gateway.getAttribute("id"))
-print(incoming)
-print(outgoing)
