@@ -11,7 +11,7 @@ def set_id_attribute(parent, attribute_name="id"):
 
 
 # Parse XML from a filename
-document = parse("/Users/jin/jin-git/HiWi/data_Samples/diagram (3).bpmn")
+document = parse("/Users/jin/jin-git/HiWi/data/diagram (3).bpmn")
 set_id_attribute(document)
 
 # Activities
@@ -39,17 +39,17 @@ for idx in range(0, taskCount):
     for child in taskList[idx].childNodes:
         if child.nodeType == Node.ELEMENT_NODE:
             if child.tagName == "bpmn:incoming":
-                dfa[str(taskList[idx].getAttribute("name"))] = {'incoming': child.firstChild.data}
+                dfa[str(taskList[idx].getAttribute("name"))+"i"] = {'incoming': child.firstChild.data}
             elif child.tagName == "bpmn:outgoing":
-                dfa[str(taskList[idx].getAttribute("name"))] = {'outgoing': child.firstChild.data}
+                dfa[str(taskList[idx].getAttribute("name"))+"o"] = {'outgoing': child.firstChild.data}
 
 print(f"Task list length: {len(taskList)}")
 print(taskList[3].getAttribute("id"))
-print(f"Here's the incoming of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('incoming')}")
-print(f"Here's the outgoing of the first task {dfa.get('outgoing0')}")
+print(f"Here's the incoming of the first task {dfa.get(str(taskList[0].getAttribute('name'))+'i').get('incoming')}")
+print(f"Here's the outgoing of the first task {dfa.get(str(taskList[0].getAttribute('name'))+'o').get('outgoing')}")
 print(f"Here's the DFA {dfa}")
 
-#Match the incoming and outgoing of the tasks
+#TODO Match the incoming and outgoing of the tasks
 # for idx in range(0, taskCount):
    
 
