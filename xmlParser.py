@@ -18,7 +18,6 @@ set_id_attribute(document)
 # Save all task IDs in a list
 taskIds = []
 for element in document.getElementsByTagNameNS("*", "task"):
-    # activity = Activities(element.getAttribute("id"), element.getAttribute("name"), "", "")
     taskIds.append(element.getAttribute("id"))
 print(f"\nTask IDs: {taskIds} \n")
 
@@ -82,26 +81,38 @@ for idx in range(0, gatewayCount):
         continue
     gatewayList.append(elements[idx]) # Saves all task elements in a list
 
+
+
+
 for idx in range(0, gatewayCount):
     gatewayName = str(gatewayList[idx].getAttribute("name"))
+    dfa[gatewayName] ={'incoming': [], 'outgoing': []}  
     if gatewayName not in dfa:
         dfa[gatewayName] = {}
     for child in gatewayList[idx].childNodes:
         if child.nodeType == Node.ELEMENT_NODE:
             if child.tagName == "incoming":
-                dfa[gatewayName]['incoming'] = child.firstChild.data
+                dfa[gatewayName]['incoming'].append(child.firstChild.data)
             elif child.tagName == "outgoing":
-                dfa[gatewayName]['outgoing'] = child.firstChild.data
+                dfa[gatewayName]['outgoing'].append(child.firstChild.data)
 
-print(f"Here's the gateway DFA{dfa}")
+print(f"Here's the gateway DFA {dfa}\n")
+
+mergedList = taskList + gatewayList
 
 
 #TODO Match the incoming and outgoing of tasks
-for idx in range(0, taskCount):
-    for index in range(0, taskCount):
-        if dfa.get(str(taskList[idx].getAttribute('name'))).get('outgoing') == dfa.get(str(taskList[index].getAttribute('name'))).get('incoming'):
-            print(f"Matched {taskList[idx].getAttribute('name')} and {taskList[index].getAttribute('name')}")
-        else:
-            print(f"Didn't match {taskList[idx].getAttribute('name')} and {taskList[index].getAttribute('name')}")
+for idx in range(0, len(mergedList)):
+    for index in range(0, len(mergedList)):
+        if dfa.get(str(mergedList[idx].getAttribute('name'))).get('outgoing') == dfa.get(str(mergedList[index].getAttribute('name'))).get('incoming'):
+            print(f"Matched {mergedList[idx].getAttribute('name')} and {mergedList[index].getAttribute('name')}")
 
-
+#TODO Match tasks and gateways using the DFA
+for task in taskList:
+    for gateway in gatewayList:
+        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('incoming'))):
+            if dfa.get(str(task.getAttribute('name'))).get('outgoing') == dfa.get(str(gateway.getAttribute('name'))).get('incoming')[idx]:
+                print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
+        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('outgoing'))):    
+            if dfa.get(str(task.getAttribute('name'))).get('incoming') == dfa.get(str(gateway.getAttribute('name'))).get('outgoing')[idx]:
+                print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
