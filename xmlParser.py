@@ -28,7 +28,15 @@ print(f"How many tasks do we have? {taskCount}\n")
 taskList = []
 dfa = {}
 
-# Retrieve first task and child nodes
+# Retrieve Start Event
+startElement = document.getElementsByTagNameNS("*", "startEvent")[0]
+dfa[str(startElement.getAttribute("name"))] = {}
+for child in startElement.childNodes:
+    if child.nodeType == Node.ELEMENT_NODE:
+        if child.tagName == "outgoing":
+            dfa[str(startElement.getAttribute("name"))]['outgoing'] = child.firstChild.data
+
+# Retrieve Tasks
 for idx in range(0, taskCount):
     elements = document.getElementsByTagNameNS("*", "task")
     if not elements:
@@ -46,14 +54,13 @@ for idx in range(0, taskCount):
             elif child.tagName == "outgoing":
                 dfa[task_name]['outgoing'] = child.firstChild.data
 
-print(f"Task list length: {len(taskList)}")
-print(taskList[3].getAttribute("id"))
-print(f"Here's the incoming of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('incoming')}")
-print(f"Here's the outgoing of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('outgoing')}")
-print(f"Here's the task DFA {dfa}")
+# print(f"Task list length: {len(taskList)}")
+# print(taskList[3].getAttribute("id"))
+# print(f"Here's the incoming of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('incoming')}")
+# print(f"Here's the outgoing of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('outgoing')}")
+# print(f"Here's the task DFA {dfa}")
 
 
-#TODO inclusive gateway must remember which activities have executed
 
 # Gateways
 # Get all gateway IDs
@@ -69,8 +76,8 @@ for gatewayType in gatewayTypes:
         gatewayList.append(element)
         element.setAttribute("name", str(gatewayType) + f"{gatewayIdx}: " + element.getAttribute("id"))
 
-print(f"\nGateway List: {gatewayIds} \n")
-print(f"How many gateways do we have? {len(gatewayIds) / 2}\n")
+# print(f"\nGateway List: {gatewayIds} \n")
+# print(f"How many gateways do we have? {len(gatewayIds) / 2}\n")
 
 gatewayCount = len(gatewayIds)
 
@@ -80,8 +87,6 @@ for idx in range(0, gatewayCount):
     if not elements:
         continue
     gatewayList.append(elements[idx]) # Saves all task elements in a list
-
-
 
 
 for idx in range(0, gatewayCount):
@@ -100,19 +105,31 @@ print(f"Here's the gateway DFA {dfa}\n")
 
 mergedList = taskList + gatewayList
 
-
-#TODO Match the incoming and outgoing of tasks
+# Match the incoming and outgoing of tasks
 for idx in range(0, len(mergedList)):
     for index in range(0, len(mergedList)):
         if dfa.get(str(mergedList[idx].getAttribute('name'))).get('outgoing') == dfa.get(str(mergedList[index].getAttribute('name'))).get('incoming'):
             print(f"Matched {mergedList[idx].getAttribute('name')} and {mergedList[index].getAttribute('name')}")
 
-#TODO Match tasks and gateways using the DFA
+# Match tasks and gateways using the DFA
+#TODO: The startEvent is not being matched to the gateways and tasks. Fix this issue.
 for task in taskList:
     for gateway in gatewayList:
-        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('incoming'))):
-            if dfa.get(str(task.getAttribute('name'))).get('outgoing') == dfa.get(str(gateway.getAttribute('name'))).get('incoming')[idx]:
-                print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
+        for idx in range(0, len(dfa.get(str(startElement.getAttribute('name'))).get('outgoing'))):
+            if dfa.get(str(task.getAttribute('name'))).get('incoming') == dfa.get(str(startElement.getAttribute('name'))).get('outgoing')[idx]:
+                print(f"Matched {startElement.getAttribute('name')} to {task.getAttribute('name')}")
+
+            elif dfa.get(str(startElement.getAttribute('name'))).get('outgoing')[idx] == dfa.get(str(gateway.getAttribute('name'))).get('incoming'):
+                print(f"Matched {startElement.getAttribute('name')} to {gateway.getAttribute('name')}")
+
         for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('outgoing'))):    
             if dfa.get(str(task.getAttribute('name'))).get('incoming') == dfa.get(str(gateway.getAttribute('name'))).get('outgoing')[idx]:
                 print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
+
+        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('incoming'))):
+            if dfa.get(str(task.getAttribute('name'))).get('outgoing') == dfa.get(str(gateway.getAttribute('name'))).get('incoming')[idx]:
+                print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
+
+
+
+
