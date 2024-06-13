@@ -11,19 +11,19 @@ def set_id_attribute(parent, attribute_name="id"):
         set_id_attribute(child, attribute_name)
 
 # Parse XML from a filename
-document = parse("/Users/jin/jin-git/HiWi/data/deliveryProcess.bpmn")
+document = parse("/Users/jin/jin-git/HiWi/data/delivery process simple.bpmn")
 set_id_attribute(document)
 
-# Activities
+
+
+# START OF ACTIVITIES
 # Save all task IDs in a list
 taskIds = []
 for element in document.getElementsByTagNameNS("*", "task"):
     taskIds.append(element.getAttribute("id"))
-print(f"\nTask IDs: {taskIds} \n")
 
 # Count the number of tasks
 taskCount = len(taskIds)
-print(f"How many tasks do we have? {taskCount}\n")
 
 taskList = []
 dfa = {}
@@ -36,12 +36,20 @@ for child in startElement.childNodes:
         if child.tagName == "outgoing":
             dfa[str(startElement.getAttribute("name"))]['outgoing'] = child.firstChild.data
 
+# Retrieve End Event
+endElement = document.getElementsByTagNameNS("*", "endEvent")[0]
+dfa[str(endElement.getAttribute("name"))] = {}
+for child in endElement.childNodes:
+    if child.nodeType == Node.ELEMENT_NODE:
+        if child.tagName == "outgoing":
+            dfa[str(endElement.getAttribute("name"))]['outgoing'] = child.firstChild.data
+
 # Retrieve Tasks
 for idx in range(0, taskCount):
     elements = document.getElementsByTagNameNS("*", "task")
     if not elements:
         continue
-    taskList.append(elements[idx]) # Saves all task elements in a list
+    taskList.append(elements[idx])  # Saves all task elements in a list
 
 for idx in range(0, taskCount):
     task_name = str(taskList[idx].getAttribute("name"))
@@ -54,15 +62,8 @@ for idx in range(0, taskCount):
             elif child.tagName == "outgoing":
                 dfa[task_name]['outgoing'] = child.firstChild.data
 
-# print(f"Task list length: {len(taskList)}")
-# print(taskList[3].getAttribute("id"))
-# print(f"Here's the incoming of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('incoming')}")
-# print(f"Here's the outgoing of the first task {dfa.get(str(taskList[0].getAttribute('name'))).get('outgoing')}")
-# print(f"Here's the task DFA {dfa}")
 
-
-
-# Gateways
+# START OF GATEWAYS
 # Get all gateway IDs
 gatewayTypes = ["exclusiveGateway", "inclusiveGateway", "parallelGateway", "complexGateway"]
 gatewayIds = []
@@ -74,24 +75,22 @@ for gatewayType in gatewayTypes:
     for element in document.getElementsByTagNameNS("*", gatewayType):
         gatewayIds.append(str(gatewayType) + f"{gatewayIdx}: " + element.getAttribute("id"))
         gatewayList.append(element)
-        element.setAttribute("name", str(gatewayType) + f"{gatewayIdx}: " + element.getAttribute("id"))
+        element.setAttribute("name", str(gatewayType) + f"{gatewayIdx}_" + element.getAttribute("id"))
 
 # print(f"\nGateway List: {gatewayIds} \n")
 # print(f"How many gateways do we have? {len(gatewayIds) / 2}\n")
 
 gatewayCount = len(gatewayIds)
 
-
 for idx in range(0, gatewayCount):
     elements = document.getElementsByTagNameNS("*", "gateway")
     if not elements:
         continue
-    gatewayList.append(elements[idx]) # Saves all task elements in a list
-
+    gatewayList.append(elements[idx])  # Saves all task elements in a list
 
 for idx in range(0, gatewayCount):
     gatewayName = str(gatewayList[idx].getAttribute("name"))
-    dfa[gatewayName] ={'incoming': [], 'outgoing': []}  
+    dfa[gatewayName] = {'incoming': [], 'outgoing': []}
     if gatewayName not in dfa:
         dfa[gatewayName] = {}
     for child in gatewayList[idx].childNodes:
@@ -101,35 +100,75 @@ for idx in range(0, gatewayCount):
             elif child.tagName == "outgoing":
                 dfa[gatewayName]['outgoing'].append(child.firstChild.data)
 
-print(f"Here's the gateway DFA {dfa}\n")
+# print(f"Here's the gateway DFA {dfa}\n")
+
+
+
+# START OF TREE: ADJACENCY LIST
 
 mergedList = taskList + gatewayList
+tree = {}
+tree[str(startElement.getAttribute("name"))] = []
+startElementName = str(startElement.getAttribute("name"))
+
+# Match gateways and startevents
+for gateway in gatewayList:
+    gatewayName = str(gateway.getAttribute("name"))
+    if gatewayName not in tree:
+        tree[gatewayName] = []
+
+    for idx in range(0, len(dfa.get(gatewayName).get('incoming'))):
+        if dfa.get(startElementName).get('outgoing') == dfa.get(gatewayName).get('incoming')[idx]:
+            tree[startElementName].append(gatewayName)
+
+# Match tasks and startevents
+for task in taskList:
+    taskName = str(gateway.getAttribute("name"))
+    if taskName not in tree:
+        tree[taskName] = []
+
+    for idx in range(0, len(dfa.get(taskName).get('incoming'))):
+        if dfa.get(startElementName).get('outgoing') == dfa.get(taskName).get('incoming')[idx]:
+            tree[startElementName].append(taskName)
 
 # Match the incoming and outgoing of tasks
 for idx in range(0, len(mergedList)):
+    if mergedList[idx].getAttribute('name') not in tree:
+        tree[mergedList[idx].getAttribute('name')] = []
     for index in range(0, len(mergedList)):
-        if dfa.get(str(mergedList[idx].getAttribute('name'))).get('outgoing') == dfa.get(str(mergedList[index].getAttribute('name'))).get('incoming'):
-            print(f"Matched {mergedList[idx].getAttribute('name')} and {mergedList[index].getAttribute('name')}")
+        if mergedList[index].getAttribute('name') not in tree:
+            tree[mergedList[index].getAttribute('name')] = []
+        if dfa.get(str(mergedList[idx].getAttribute('name'))).get('outgoing') == dfa.get(
+                str(mergedList[index].getAttribute('name'))).get('incoming'):
+            # print(f"Matched {mergedList[idx].getAttribute('name')} and {mergedList[index].getAttribute('name')}")
+            tree[str(mergedList[idx].getAttribute('name'))].append(str(mergedList[index].getAttribute('name')))
 
 # Match tasks and gateways using the DFA
-#TODO: The startEvent is not being matched to the gateways and tasks. Fix this issue.
 for task in taskList:
+    taskName = str(task.getAttribute("name"))
+    if taskName not in tree:
+        tree[taskName] = []
     for gateway in gatewayList:
-        for idx in range(0, len(dfa.get(str(startElement.getAttribute('name'))).get('outgoing'))):
-            if dfa.get(str(task.getAttribute('name'))).get('incoming') == dfa.get(str(startElement.getAttribute('name'))).get('outgoing')[idx]:
-                print(f"Matched {startElement.getAttribute('name')} to {task.getAttribute('name')}")
+        gatewayName = str(gateway.getAttribute("name"))
+        if gatewayName not in tree:
+            tree[gatewayName] = []
 
-            elif dfa.get(str(startElement.getAttribute('name'))).get('outgoing')[idx] == dfa.get(str(gateway.getAttribute('name'))).get('incoming'):
-                print(f"Matched {startElement.getAttribute('name')} to {gateway.getAttribute('name')}")
+        # Matching gateways to tasks
+        for idx in range(0, len(dfa.get(gatewayName).get('outgoing'))):
+            if dfa.get(taskName).get('incoming') == dfa.get(gatewayName).get('outgoing')[idx]:
+                # print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
+                tree[gatewayName].append(taskName)
 
-        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('outgoing'))):    
-            if dfa.get(str(task.getAttribute('name'))).get('incoming') == dfa.get(str(gateway.getAttribute('name'))).get('outgoing')[idx]:
-                print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
-
-        for idx in range(0, len(dfa.get(str(gateway.getAttribute('name'))).get('incoming'))):
-            if dfa.get(str(task.getAttribute('name'))).get('outgoing') == dfa.get(str(gateway.getAttribute('name'))).get('incoming')[idx]:
-                print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
+        # Matching tasks to gateways
+        for idx in range(0, len(dfa.get(gatewayName).get('incoming'))):
+            if dfa.get(taskName).get('outgoing') == dfa.get(gatewayName).get('incoming')[idx]:
+                # print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
+                tree[taskName].append(gatewayName)
 
 
 
+#TODO implement logic for inclusive and exlusive gateways
+#  if gateway.getAttribute('name').contains("exclusive"):
+# elif gateway.getAttribute('name').contains("inclusive"):
 
+print(f"\nHere is the tree {tree}\n")
