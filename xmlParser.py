@@ -38,11 +38,12 @@ for child in startElement.childNodes:
 
 # Retrieve End Event
 endElement = document.getElementsByTagNameNS("*", "endEvent")[0]
-dfa[str(endElement.getAttribute("name"))] = {}
+endElementName = str(endElement.getAttribute("name"))
+dfa[endElementName] = {'incoming': []}
 for child in endElement.childNodes:
     if child.nodeType == Node.ELEMENT_NODE:
-        if child.tagName == "outgoing":
-            dfa[str(endElement.getAttribute("name"))]['outgoing'] = child.firstChild.data
+        if child.tagName == "incoming":
+            dfa[endElementName]['incoming'].append(child.firstChild.data)
 
 # Retrieve Tasks
 for idx in range(0, taskCount):
@@ -61,6 +62,7 @@ for idx in range(0, taskCount):
                 dfa[task_name]['incoming'] = child.firstChild.data
             elif child.tagName == "outgoing":
                 dfa[task_name]['outgoing'] = child.firstChild.data
+
 
 
 # START OF GATEWAYS
@@ -100,16 +102,20 @@ for idx in range(0, gatewayCount):
             elif child.tagName == "outgoing":
                 dfa[gatewayName]['outgoing'].append(child.firstChild.data)
 
-# print(f"Here's the gateway DFA {dfa}\n")
-
+print(f"\n{dfa}\n")
 
 
 # START OF TREE: ADJACENCY LIST
 
 mergedList = taskList + gatewayList
 tree = {}
-tree[str(startElement.getAttribute("name"))] = []
 startElementName = str(startElement.getAttribute("name"))
+tree[startElementName] = []
+
+
+endElementName = str(endElement.getAttribute("name"))
+tree[endElementName] = []
+
 
 # Match gateways and startevents
 for gateway in gatewayList:
@@ -123,13 +129,34 @@ for gateway in gatewayList:
 
 # Match tasks and startevents
 for task in taskList:
-    taskName = str(gateway.getAttribute("name"))
+    taskName = str(task.getAttribute("name"))
     if taskName not in tree:
         tree[taskName] = []
 
     for idx in range(0, len(dfa.get(taskName).get('incoming'))):
         if dfa.get(startElementName).get('outgoing') == dfa.get(taskName).get('incoming')[idx]:
             tree[startElementName].append(taskName)
+
+# Match tasks and endEvents
+for task in taskList:
+    taskName = str(task.getAttribute("name"))
+    if taskName not in tree:
+        tree[taskName] = []
+
+    for idx in range(0, len(dfa.get(endElementName).get('incoming'))):
+        if dfa.get(endElementName).get('incoming')[idx] == dfa.get(taskName).get('outgoing'):
+            tree[taskName].append(endElementName)
+
+# Match gateways and endEvents
+for gateway in gatewayList:
+    gatewayName = str(gateway.getAttribute("name"))
+    if gatewayName not in tree:
+        tree[gatewayName] = []
+
+    for idx in range(0, len(dfa.get(endElementName).get('incoming'))):
+        for k in range(0, len(dfa.get(gatewayName).get('outgoing'))):
+            if dfa.get(endElementName).get('incoming')[idx] == dfa.get(gatewayName).get('outgoing')[k]:
+                tree[gatewayName].append(endElementName)
 
 # Match the incoming and outgoing of tasks
 for idx in range(0, len(mergedList)):
@@ -159,7 +186,6 @@ for task in taskList:
                 # print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
                 tree[gatewayName].append(taskName)
 
-        # Matching tasks to gateways
         for idx in range(0, len(dfa.get(gatewayName).get('incoming'))):
             if dfa.get(taskName).get('outgoing') == dfa.get(gatewayName).get('incoming')[idx]:
                 # print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
