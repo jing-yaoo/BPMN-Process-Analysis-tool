@@ -30,11 +30,12 @@ dfa = {}
 
 # Retrieve Start Event
 startElement = document.getElementsByTagNameNS("*", "startEvent")[0]
-dfa[str(startElement.getAttribute("name"))] = {}
+startElementName = str(startElement.getAttribute("name"))
+dfa[startElementName] = {}
 for child in startElement.childNodes:
     if child.nodeType == Node.ELEMENT_NODE:
         if child.tagName == "outgoing":
-            dfa[str(startElement.getAttribute("name"))]['outgoing'] = child.firstChild.data
+            dfa[startElementName]['outgoing'] = child.firstChild.data
 
 # Retrieve End Event
 endElement = document.getElementsByTagNameNS("*", "endEvent")[0]
@@ -102,7 +103,7 @@ for idx in range(0, gatewayCount):
             elif child.tagName == "outgoing":
                 dfa[gatewayName]['outgoing'].append(child.firstChild.data)
 
-print(f"\n{dfa}\n")
+# print(f"\n{dfa}\n")
 
 
 # START OF TREE: ADJACENCY LIST
@@ -111,7 +112,6 @@ mergedList = taskList + gatewayList
 tree = {}
 startElementName = str(startElement.getAttribute("name"))
 tree[startElementName] = []
-
 
 endElementName = str(endElement.getAttribute("name"))
 tree[endElementName] = []
@@ -191,10 +191,5 @@ for task in taskList:
                 # print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
                 tree[taskName].append(gatewayName)
 
-
-
-#TODO implement logic for inclusive and exlusive gateways
-#  if gateway.getAttribute('name').contains("exclusive"):
-# elif gateway.getAttribute('name').contains("inclusive"):
 
 print(f"\nHere is the tree {tree}\n")
