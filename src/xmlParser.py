@@ -1,5 +1,4 @@
 from xml.dom.minidom import parse, Node, parseString
-import Gateways, Activities
 
 
 # Set the id attribute for all elements that have an attribute named "id"

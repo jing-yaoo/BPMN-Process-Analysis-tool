@@ -1,4 +1,4 @@
-from xmlParser import tree
+from src.xmlParser import tree
 import collections
 from copy import deepcopy
 
