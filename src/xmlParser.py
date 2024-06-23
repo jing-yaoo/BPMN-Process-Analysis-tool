@@ -191,4 +191,6 @@ for task in taskList:
                 tree[taskName].append(gatewayName)
 
 
-print(f"\nHere is the tree {tree}\n")
+# print(f"\nHere is the tree {tree}\n")
+# for key, value in tree.items():
+#     print(f"'{key}': {value}")
