@@ -9,7 +9,7 @@ def set_id_attribute(parent, attribute_name="id"):
     for child in parent.childNodes:
         set_id_attribute(child, attribute_name)
 
-# Parse XML from a filename
+# Parse XML from a filename (Insert the relative path of the BPMN file)
 document = parse("/Users/jin/jin-git/HiWi/data/delivery process simple.bpmn")
 set_id_attribute(document)
 
@@ -79,8 +79,6 @@ for gatewayType in gatewayTypes:
         gatewayList.append(element)
         element.setAttribute("name", str(gatewayType) + f"{gatewayIdx}_" + element.getAttribute("id"))
 
-# print(f"\nGateway List: {gatewayIds} \n")
-# print(f"How many gateways do we have? {len(gatewayIds) / 2}\n")
 
 gatewayCount = len(gatewayIds)
 
@@ -101,8 +99,6 @@ for idx in range(0, gatewayCount):
                 dfa[gatewayName]['incoming'].append(child.firstChild.data)
             elif child.tagName == "outgoing":
                 dfa[gatewayName]['outgoing'].append(child.firstChild.data)
-
-# print(f"\n{dfa}\n")
 
 
 # START OF TREE: ADJACENCY LIST
@@ -166,7 +162,6 @@ for idx in range(0, len(mergedList)):
             tree[mergedList[index].getAttribute('name')] = []
         if dfa.get(str(mergedList[idx].getAttribute('name'))).get('outgoing') == dfa.get(
                 str(mergedList[index].getAttribute('name'))).get('incoming'):
-            # print(f"Matched {mergedList[idx].getAttribute('name')} and {mergedList[index].getAttribute('name')}")
             tree[str(mergedList[idx].getAttribute('name'))].append(str(mergedList[index].getAttribute('name')))
 
 # Match tasks and gateways using the DFA
@@ -182,12 +177,10 @@ for task in taskList:
         # Matching gateways to tasks
         for idx in range(0, len(dfa.get(gatewayName).get('outgoing'))):
             if dfa.get(taskName).get('incoming') == dfa.get(gatewayName).get('outgoing')[idx]:
-                # print(f"Matched {gateway.getAttribute('name')} to {task.getAttribute('name')}")
                 tree[gatewayName].append(taskName)
 
         for idx in range(0, len(dfa.get(gatewayName).get('incoming'))):
             if dfa.get(taskName).get('outgoing') == dfa.get(gatewayName).get('incoming')[idx]:
-                # print(f"Matched {task.getAttribute('name')} to {gateway.getAttribute('name')}")
                 tree[taskName].append(gatewayName)
 
 
